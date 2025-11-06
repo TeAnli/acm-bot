@@ -50,7 +50,7 @@ class SCPCPlugin(NcatBotPlugin):
 签名: {data["signature"]}
 提交数: {data["total"]}
 AC数: {len(data["solvedList"])}
-题目通过率: {"{:.2f}".format(caculate_accept_ratio(data["total"], len(data["solvedList"])))}%"""
+题目通过率: {"{:.2f}".format(caculate_accept_ratio(data["total"], len(data["solvedList"]))) * 100}%"""
                 } 
             },
         ])

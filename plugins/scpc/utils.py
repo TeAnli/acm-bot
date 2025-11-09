@@ -39,6 +39,40 @@ def state_icon(state: str) -> str:
     return mapping.get(state, "ℹ️")
 
 
+def format_contest_text(name: str,
+                        contest_id: int | None,
+                        state: str,
+                        start_ts: int,
+                        remaining_label: str,
+                        remaining_secs: int,
+                        duration_secs: int,
+                        include_id: bool = True) -> str:
+    """Build a unified contest message string for CF/SCPC/Luogu.
+    - name: contest name
+    - contest_id: optional numeric id for display
+    - state: '即将开始' | '进行中' | '已结束'
+    - start_ts: start timestamp in seconds
+    - remaining_label: label before remaining time string
+    - remaining_secs: seconds remaining to start/end
+    - duration_secs: contest duration in seconds
+    - include_id: whether to include ID in the display name
+    """
+    icon = state_icon(state)
+    start_time_str = format_timestamp(start_ts)
+    duration_hours = format_hours(duration_secs, precision=1)
+    remaining_str = format_relative_hours(remaining_secs, precision=1)
+
+    title_line = f"{name}" if not include_id or contest_id is None else f"{name} (ID: {contest_id})"
+    return (
+        f"比赛名称:\n"
+        f"{title_line}\n"
+        f"状态: {icon} {state}\n"
+        f"开始时间: {start_time_str}\n"
+        f"{remaining_label}: {remaining_str}\n"
+        f"比赛时长: {duration_hours} 小时"
+    )
+
+
 def parse_scpc_time(value) -> int:
     """Parse SCPC time which may be ISO string or timestamp seconds, return seconds."""
     if value is None:
@@ -63,3 +97,9 @@ def parse_scpc_time(value) -> int:
     except Exception:
         pass
     return 0
+
+
+def calculate_accept_ratio(total_count: int, accept_count: int) -> float:
+    if total_count == 0:
+        return 0.0
+    return accept_count / total_count

@@ -1,24 +1,29 @@
 from datetime import datetime
 import math
 
-
-def format_timestamp(ts: int, fmt: str = "%Y-%m-%d %H:%M") -> str:
-    """Format a Unix timestamp to a readable datetime string."""
-    return datetime.fromtimestamp(ts).strftime(fmt)
-
+def format_timestamp(timestamp: int, format: str = "%Y-%m-%d %H:%M") -> str:
+    """ 将tiemstamp数字格式化 """
+    return datetime.fromtimestamp(timestamp).strftime(format)
 
 def format_hours(seconds: int, precision: int = 1) -> str:
-    """Convert seconds to hours string with given precision."""
+    """将秒数转化为小时数, 并保留指定位数小数"""
     hours = seconds / 3600
     return f"{hours:.{precision}f}"
 
 
 def build_text_msg(text: str) -> dict:
-    """Build a text message payload for group messaging API."""
+    """构建 QQ Message 字符串"""
     return {"type": "text", "data": {"text": text}}
 
 
 def format_relative_hours(seconds: int, precision: int = 1) -> str:
+    """ 
+        格式化相距时间
+        规则: 
+            1. 相聚时间 < 1天, 以小时数返回
+            2. 相聚时间 < 7天, 以天数返回
+            3. 相聚时间 < 1年, 以周数返回
+    """
     hours = seconds / 3600
     if hours >= 24 * 7:
         weeks = math.ceil(hours / (24 * 7))
@@ -30,12 +35,15 @@ def format_relative_hours(seconds: int, precision: int = 1) -> str:
 
 
 def state_icon(state: str) -> str:
-    """Return an icon for contest state."""
+    """
+        比赛状态图标和文字信息
+    """
     mapping = {
         "即将开始": "⏳",
         "进行中": "🟢",
         "已结束": "🔴",
     }
+    # 没找到 state 的话 返回 特殊icon
     return mapping.get(state, "ℹ️")
 
 
@@ -47,15 +55,17 @@ def format_contest_text(name: str,
                         remaining_secs: int,
                         duration_secs: int,
                         include_id: bool = True) -> str:
-    """Build a unified contest message string for CF/SCPC/Luogu.
-    - name: contest name
-    - contest_id: optional numeric id for display
-    - state: '即将开始' | '进行中' | '已结束'
-    - start_ts: start timestamp in seconds
-    - remaining_label: label before remaining time string
-    - remaining_secs: seconds remaining to start/end
-    - duration_secs: contest duration in seconds
-    - include_id: whether to include ID in the display name
+    """
+    对洛谷,scpc,codeforces使用相同的格式化比赛信息输出
+    参数:    
+        - name: 比赛名称
+        - contest_id: 比赛ID
+        - state: '即将开始' | '进行中' | '已结束'
+        - start_ts: 开始时间的timestamp
+        - remaining_label: 距离比赛开始的标题
+        - remaining_secs: 距离比赛开始的时间
+        - duration_secs: 比赛持续时间
+        - include_id: 是否要在比赛名称处加入id显示
     """
     icon = state_icon(state)
     start_time_str = format_timestamp(start_ts)
@@ -74,20 +84,20 @@ def format_contest_text(name: str,
 
 
 def parse_scpc_time(value) -> int:
-    """Parse SCPC time which may be ISO string or timestamp seconds, return seconds."""
+    """
+        解析JAVA未经格式化的Date内容
+    """
     if value is None:
         return 0
     try:
         if isinstance(value, (int, float)):
             return int(value)
         if isinstance(value, str):
-            # Try strict ISO with timezone like 2027-07-08T23:09:00.000+0000
             try:
                 dt = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f%z")
                 return int(dt.timestamp())
             except Exception:
                 pass
-            # Fallback: fromisoformat with Z or +00:00 variations
             try:
                 v = value.replace("Z", "+00:00")
                 dt = datetime.fromisoformat(v)

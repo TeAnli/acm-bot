@@ -121,7 +121,25 @@ def calculate_accept_ratio(total_count: int, accept_count: int) -> float:
         return 0.0
     return accept_count / total_count
 
-def group_member_filter():
+async def send_group_messages(api_client, group_id: int, messages: list[dict]):
+    """发送原始消息数组到指定群聊，统一异常处理。"""
+    try:
+        await api_client.send_group_msg(group_id, messages)
+    except Exception as e:
+        _logger.warning(f'Send group message failed: {e}')
+
+
+async def send_group_text(api_client, group_id: int, text: str):
+    """发送纯文本消息到群聊。"""
+    await send_group_messages(api_client, group_id, [build_text_msg(text)])
+
+
+async def broadcast_text(api_client, group_listeners: dict, text: str):
+    """向开启监听的群聊广播文本消息。"""
+    for gid, enabled in group_listeners.items():
+        if enabled:
+            await send_group_text(api_client, gid, text)
+def require_sender_admin():
     """
     用于群聊命令的权限过滤装饰器：仅允许群管理员/群主使用被装饰的命令。
     """

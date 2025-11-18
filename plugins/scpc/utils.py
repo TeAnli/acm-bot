@@ -1,27 +1,43 @@
 from datetime import datetime
 import math
 from functools import wraps
-from typing import Callable
+from typing import Callable, Optional, Dict, Any
+import requests
 from ncatbot.plugin_system import NcatBotPlugin
 from ncatbot.core.event import BaseMessageEvent
 from ncatbot.utils import get_log
 
 _logger = get_log()
 
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36 QIHU 360SE',
+    'Content-Type': 'application/json',
+}
+
+def fetch_json(url: str, timeout: int = 10) -> Optional[Dict[str, Any]]:
+    """以统一 headers 发起 GET 请求并解析 JSON。失败返回 None。"""
+    try:
+        resp = requests.get(url, headers=headers, timeout=timeout)
+    except Exception as e:
+        _logger.warning(f'HTTP 请求失败: {e}')
+        return None
+    if getattr(resp, 'status_code', 0) != 200:
+        _logger.warning(f'请求 {url} 返回状态码异常: {getattr(resp, "status_code", "")} {getattr(resp, "text", "")}')
+        return None
+    try:
+        return resp.json()
+    except Exception as e:
+        _logger.warning(f'JSON 解析失败: {e}')
+        return None
+
 def format_timestamp(timestamp: int, format: str = "%Y-%m-%d %H:%M") -> str:
-    """ 将tiemstamp数字格式化 """
+    """ 将timestamp数字格式化 """
     return datetime.fromtimestamp(timestamp).strftime(format)
 
 def format_hours(seconds: int, precision: int = 1) -> str:
     """将秒数转化为小时数, 并保留指定位数小数"""
     hours = seconds / 3600
     return f"{hours:.{precision}f}"
-
-
-def build_text_msg(text: str) -> dict:
-    """构建 QQ Message 字符串"""
-    return {"type": "text", "data": {"text": text}}
-
 
 def format_relative_hours(seconds: int, precision: int = 1) -> str:
     """ 
@@ -50,7 +66,6 @@ def state_icon(state: str) -> str:
         "进行中": "🟢",
         "已结束": "🔴",
     }
-    # 没找到 state 的话 返回 特殊icon
     return mapping.get(state, "ℹ️")
 
 
@@ -117,6 +132,7 @@ def parse_scpc_time(value) -> int:
 
 
 def calculate_accept_ratio(total_count: int, accept_count: int) -> float:
+    """计算通过率 accept/total。total 为 0 时返回 0.0。"""
     if total_count == 0:
         return 0.0
     return accept_count / total_count
@@ -126,19 +142,14 @@ async def send_group_messages(api_client, group_id: int, messages: list[dict]):
     try:
         await api_client.send_group_msg(group_id, messages)
     except Exception as e:
-        _logger.warning(f'Send group message failed: {e}')
-
-
-async def send_group_text(api_client, group_id: int, text: str):
-    """发送纯文本消息到群聊。"""
-    await send_group_messages(api_client, group_id, [build_text_msg(text)])
-
+        _logger.warning(f'发送群消息失败: {e}')
 
 async def broadcast_text(api_client, group_listeners: dict, text: str):
     """向开启监听的群聊广播文本消息。"""
     for gid, enabled in group_listeners.items():
         if enabled:
-            await send_group_text(api_client, gid, text)
+            await api_client.send_group_text(gid, text)
+            
 def require_sender_admin():
     """
     用于群聊命令的权限过滤装饰器：仅允许群管理员/群主使用被装饰的命令。
@@ -159,7 +170,7 @@ def require_sender_admin():
                     return await func(self, event, *args, **kwargs)
                 return await event.reply("您不是群管理员或群主，无法执行此命令。")
             except Exception as e:
-                _logger.warning(f"Failed to get sender's group role: {e}")
+                _logger.warning(f"获取发送者群角色失败: {e}")
                 await event.reply("无法获取您的群成员信息，暂时无法执行该命令。")
                 return
         return wrapper

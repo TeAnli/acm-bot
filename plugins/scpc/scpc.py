@@ -67,7 +67,16 @@ class ScpcContestRankUser:
     total: int
     ac: int
     totalTime: int   
-    
+
+@dataclass
+class ScpcUpdatedProblem:
+    id: int
+    problemId: str
+    title: str
+    type: int
+    gmtCreate: int
+    gmtModified: int
+
     
 def scpc_login(username: str, password: str) -> Optional[str]:
     response = requests.post(
@@ -217,15 +226,6 @@ def get_scpc_recent_contests() -> Optional[List[ScpcContest]]:
         except Exception:
             continue
     return contest_list
-
-@dataclass
-class ScpcUpdatedProblem:
-    id: int
-    problemId: str
-    title: str
-    type: int
-    gmtCreate: int
-    gmtModified: int
 
 def get_scpc_recent_updated_problems() -> Optional[List[ScpcUpdatedProblem]]:
     body = fetch_json(scpc_recent_updated_problem())

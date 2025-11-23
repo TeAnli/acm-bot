@@ -3,7 +3,7 @@ name: Auto Tag on Version Update
 on:
   push:
     branches:
-      - main
+      - master
     paths:
       - '__init__.py'
 

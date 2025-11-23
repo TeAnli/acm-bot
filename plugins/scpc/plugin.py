@@ -251,6 +251,7 @@ class SCPCPlugin(NcatBotPlugin):
                 duration_secs=duration,
                 include_id=False,
             )
+
             collected.append((sort_key, text))
 
         collected.sort(key=lambda x: x[0])
@@ -261,6 +262,7 @@ class SCPCPlugin(NcatBotPlugin):
             await self.api.send_group_text(event.group_id, '近期暂无即将开始或进行中的 SCPC 比赛')
     @command_registry.command("scpc排行", description='获取SCPC最近一周过题排行')
     @group_filter
+    
     async def get_scpc_week_rank_command(self, event: GroupMessageEvent):
         records = fetch_scpc_week_rank()
         if records is None:
@@ -272,8 +274,8 @@ class SCPCPlugin(NcatBotPlugin):
             text = format_rank_text(
                 username=record.username,
                 avatar=record.avatar,
-                titlename=record.titlename,
-                titleColor=record.titleColor,
+                titlename=record.title_name,
+                titleColor=record.title_color,
                 ac=record.ac,
             )
             lines.append(text)
@@ -296,7 +298,7 @@ class SCPCPlugin(NcatBotPlugin):
                 
             last_contest = ratings[-1]
             ratings_text = (
-                f"新积分: {last_contest.newRating}\n"
+                f"新积分: {last_contest.new_rating}\n"
             )
 
             await self.api.send_group_text(event.group_id, ratings_text.strip())
@@ -353,8 +355,8 @@ class SCPCPlugin(NcatBotPlugin):
             return
         lines = []
         for p in items:
-            time_str = format_timestamp(p.gmtModified) if isinstance(p.gmtModified, int) and p.gmtModified > 0 else str(p.gmtModified)
-            lines.append(f"题目: {p.title} (ID: {p.problemId}) | 更新时间: {time_str}")
+            time_str = format_timestamp(p.gmt_modified) if isinstance(p.gmt_modified, int) and p.gmt_modified > 0 else str(p.gmt_modified)
+            lines.append(f"题目: {p.title} (ID: {p.problem_id}) | 更新时间: {time_str}")
         await self.api.send_group_text(event.group_id, '\n'.join(lines))
 
     @command_registry.command('牛客近期比赛', description='获取牛客近期比赛信息')
@@ -385,6 +387,6 @@ class SCPCPlugin(NcatBotPlugin):
             return
         lines = []
         for u in ranks:
-            line = f"#{u.rank} {u.username} ({u.realname}) | 奖项:{u.awardName} | AC:{u.ac} / 提交:{u.total} | 用时:{u.totalTime}s"
+            line = f"#{u.rank} {u.username} ({u.real_name}) | 奖项:{u.award_name} | AC:{u.ac} / 提交:{u.total} | 用时:{u.total_time}s"
             lines.append(line)
         await self.api.send_group_text(event.group_id, '\n'.join(lines))

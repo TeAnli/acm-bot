@@ -51,31 +51,31 @@ class ScpcContest:
 class ScpcWeekACUser:
     username: str
     avatar: str
-    titlename: str
-    titleColor: str # 16进制RGB
+    title_name: str
+    title_color: str # 16进制RGB
     ac: int
 
 @dataclass
 class ScpcContestRankUser:
     rank: int
-    awardName: str
+    award_name: str
     uid: str
     username: str
-    realname: str
+    real_name: str
     gender: str
     avatar: str
     total: int
     ac: int
-    totalTime: int   
+    total_time: int   
 
 @dataclass
 class ScpcUpdatedProblem:
     id: int
-    problemId: str
+    problem_id: str
     title: str
     type: int
-    gmtCreate: int
-    gmtModified: int
+    gmt_create: int
+    gmt_modified: int
 
     
 def scpc_login(username: str, password: str) -> Optional[str]:
@@ -142,15 +142,15 @@ def get_scpc_contest_rank(
             rank_users.append(
                 ScpcContestRankUser(
                     rank=int(record.get("rank", 0)),
-                    awardName=str(record.get("awardName", "") or ""),
+                    award_name=str(record.get("awardName", "") or ""),
                     uid=str(record.get("uid", "") or ""),
                     username=str(record.get("username", "") or ""),
-                    realname=str(record.get("realname", "") or ""),
+                    real_name=str(record.get("realname", "") or ""),
                     gender=str(record.get("gender", "") or ""),
                     avatar=str(record.get("avatar", "") or ""),
                     total=int(record.get("total", 0)),
                     ac=int(record.get("ac", 0)),
-                    totalTime=int(record.get("totalTime", 0)),
+                    total_time=int(record.get("totalTime", 0)),
                 )
             )
         except Exception:
@@ -168,10 +168,15 @@ def get_scpc_rank() -> Optional[List[ScpcWeekACUser]]:
         try:
             username = entry.get('username') or ''
             avatar = entry.get('avatar') or ''
-            titlename = entry.get('titlename') or ''
-            titleColor = entry.get('titleColor') or ''
+            title_name = entry.get('titlename') or ''
+            title_color = entry.get('titleColor') or ''
             ac = int(entry.get('ac', 0))
-            users.append(ScpcWeekACUser(username=username, avatar=avatar, titlename=titlename, titleColor=titleColor, ac=ac))
+            users.append(ScpcWeekACUser(
+                username=username, 
+                avatar=avatar, 
+                title_name=title_name,
+                title_color=title_color, 
+                ac=ac))
         except Exception:
             continue
     return users
@@ -242,7 +247,7 @@ def get_scpc_recent_updated_problems() -> Optional[List[ScpcUpdatedProblem]]:
             typ = int(r.get('type', 0))
             created = parse_scpc_time(r.get('gmtCreate'))
             modified = parse_scpc_time(r.get('gmtModified'))
-            items.append(ScpcUpdatedProblem(id=rid, problemId=pid, title=title, type=typ, gmtCreate=created, gmtModified=modified))
+            items.append(ScpcUpdatedProblem(id=rid, problem_id=pid, title=title, type=typ, gmt_create=created, gmt_modified=modified))
         except Exception:
             continue
     return items

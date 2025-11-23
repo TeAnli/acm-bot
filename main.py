@@ -1,9 +1,11 @@
 
+import asyncio
 from ncatbot.core import BotClient
 from ncatbot.core.event import GroupMessageEvent
 from ncatbot.utils import get_log
+
 bot = BotClient()
-logger = get_log()
+LOG = get_log()
 
 about_information = """✨ 关于"安心Bot" ✨
 👤 作者: 不知名人士
@@ -28,46 +30,19 @@ menu_information = """💖 安心Bot 菜单 💖
 /scpc信息 <用户名> - 获取指定用户名 SCPC 网站信息
 /scpc榜单图 - 获取scpc一周内过题数前十名榜单"""
 
-
-def is_at_me(event: GroupMessageEvent) -> bool:
-    """检测是否有人 @ 机器人自身。"""
-    try:
-        # 遍历结构化消息片段，查找 at 段
-        for seg in getattr(event, "message", []):
-            d = seg.to_dict() if hasattr(seg, "to_dict") else seg
-            if isinstance(d, dict) and d.get("type") == "at":
-                qq = d.get("data", {}).get("qq")
-                if qq and str(qq) == str(event.self_id):
-                    return True
-    except Exception:
-        pass
-    # 兼容原始文本中包含 CQ 码的情况
-    raw = getattr(event, "raw_message", "") or ""
-    if f"[CQ:at,qq={event.self_id}]" in raw:
-        return True
-    return False
-
-
-async def respond_to_at(event: GroupMessageEvent) -> None:
-    """根据 @ 的内容，发送 /菜单 或 /关于 已定义文本。"""
-    raw = (getattr(event, "raw_message", "") or "").strip()
-    # 优先匹配带斜杠的标准命令，其次是中文关键词
-    if "/菜单" in raw or "菜单" in raw:
-        await bot.api.post_group_msg(event.group_id, text=menu_information)
-        return
-    if "/关于" in raw or "关于" in raw:
-        await bot.api.post_group_msg(event.group_id, text=about_information)
-        return
-
-
 @bot.on_group_message()
-async def on_group_message(event: GroupMessageEvent):
-    # 检测被 @ 时，根据内容回复菜单或关于
-    if is_at_me(event):
-        await respond_to_at(event)
+def group_message_handler(event: GroupMessageEvent):
+    raw = (event.raw_message or "").strip()
+    # 优先匹配带斜杠的标准命令，其次是中文关键词
+    if "/菜单" == raw or "菜单" == raw:
+        asyncio.create_task(bot.api.post_group_msg(event.group_id, text=menu_information))
+        return
+    if "/关于" == raw or "关于" == raw:
+        asyncio.create_task(bot.api.post_group_msg(event.group_id, text=about_information))
+        return
 
 
 if __name__ == '__main__':
-    logger.info('机器人启动中...')
+    LOG.info('机器人启动中...')
     bot.run()
-    logger.info('机器人已停止。')
+    LOG.info('机器人已停止。')

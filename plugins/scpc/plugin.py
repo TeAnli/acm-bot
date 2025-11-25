@@ -8,6 +8,8 @@ from ncatbot.plugin_system import command_registry
 from ncatbot.utils import get_log
 
 import random
+import requests
+import os
 
 from .platforms.codeforces import (
     get_codeforces_contests,
@@ -21,13 +23,15 @@ from .platforms.scpc import (
     get_scpc_recent_contests,
     get_scpc_recent_updated_problems,
     get_scpc_rank as fetch_scpc_week_rank,
+    render_scpc_week_rank_image,
+    render_scpc_user_info_image,
+    render_scpc_contests_image,
 )
 from .utils import (
     calculate_accept_ratio,
     format_contest_text,
     broadcast_text,
     format_timestamp,
-    format_rank_text,
     Contest,
     extract_contest_timing,
 )
@@ -312,7 +316,19 @@ class SCPCPlugin(NcatBotPlugin):
         )
         nickname = getattr(data, "nickname", username) or username
         signature = getattr(data, "signature", "") or ""
-
+        avatar = getattr(data, "avatar", "") or ""
+        img_path = await render_scpc_user_info_image(
+            nickname=nickname,
+            signature=signature,
+            total=total,
+            ac=len(solved_list),
+            accept_ratio=accept_ratio,
+            username=username,
+            avatar=avatar,
+        )
+        if img_path:
+            await self.api.send_group_image(event.group_id, img_path)
+            return
         user_text = (
             f"SCPC 个人信息：\n"
             f"昵称: {nickname}\n"
@@ -357,6 +373,10 @@ class SCPCPlugin(NcatBotPlugin):
                 event.group_id, "暂时无法获取 SCPC 比赛信息, 请稍后重试"
             )
             return
+        img_path = await render_scpc_contests_image(records)
+        if img_path:
+            await self.api.send_group_image(event.group_id, img_path)
+            return
         texts = self._build_contest_texts(
             records, include_id=False, source="scpc", skip_verify_name=True
         )
@@ -379,22 +399,14 @@ class SCPCPlugin(NcatBotPlugin):
                 event.group_id, "暂时无法获取 SCPC 排行信息, 请稍后重试"
             )
             return
+        img_path = await render_scpc_week_rank_image(records)
+        if img_path:
+            await self.api.send_group_image(event.group_id, img_path)
+            return
         lines = []
-        for record in records:
-            text = format_rank_text(
-                username=record.username,
-                avatar=record.avatar,
-                title_name=record.title_name,
-                title_color=record.title_color,
-                ac=record.ac,
-            )
-            lines.append(text)
-        if lines:
-            await self.api.send_group_text(event.group_id, "\n\n".join(lines))
-        else:
-            await self.api.send_group_text(
-                event.group_id, "暂时无法获取 SCPC 排行信息, 请稍后重试"
-            )
+        for i, record in enumerate(records, start=1):
+            lines.append(f"#{i} {record.username} | AC:{record.ac}")
+        await self.api.send_group_text(event.group_id, "\n".join(lines))
 
     @command_registry.command("cf积分", description="获取codeforces比赛信息")
     @group_filter

@@ -1,5 +1,7 @@
 from typing import Optional, List, Any
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
+
+from openpyxl import Workbook
 from ..utils import fetch_json
 from ..utils import parse_scpc_time
 from ..utils import Contest
@@ -10,11 +12,10 @@ from ..utils import (
     format_relative_hours,
     state_icon,
 )
-from ncatbot.utils import get_log
-import os
 from playwright.async_api import async_playwright
-
+import os
 import requests
+import xlsxwriter
 
 
 def scpc_user_info_url(username: str) -> str:
@@ -87,17 +88,39 @@ class ScpcWeekACUser:
 
 
 @dataclass
+class ACMInformation:
+    error_count: int
+    is_ac: bool = False
+    ac_time: int = 0
+    is_first_ac: bool = False
+
+
+@dataclass
 class ScpcContestRankUser:
     rank: int  # 排名
     award_name: str  # 奖项名称
-    uid: str  # 用户 ID
-    username: str  # 用户名
+    user_name: str  # 用户名
     real_name: str  # 真实姓名
-    gender: str  # 性别
-    avatar: str  # 头像地址
-    total: int  # 总提交数
+    nick_name: str  # 昵称
+    school: str  # 班级
+    total: int  # 总尝试次数
+    total_time: int  # 总耗时
     ac: int  # 通过题目数量
-    total_time: int  # 总耗时（秒）
+    information: dict[int, ACMInformation]  # 题目提交信息，键为题目ID
+
+    @classmethod
+    def get_chinese_headers(cls):
+        return {
+            "rank": "排名",
+            "award_name": "奖项",
+            "user_name": "用户名",
+            "real_name": "真实姓名",
+            "nick_name": "昵称",
+            "school": "班级",
+            "total_time": "耗时",
+            "total": "总尝试次数",
+            "ac": "通过数",
+        }
 
 
 @dataclass
@@ -144,8 +167,6 @@ def scpc_login(username: str, password: str) -> Optional[str]:
 def get_scpc_contest_rank(
     contest_id: int,
     token: str,
-    current_page: int = 1,
-    limit: int = 50,
 ) -> Optional[List[ScpcContestRankUser]]:
     """
     获取指定比赛的过题排行榜
@@ -170,8 +191,8 @@ def get_scpc_contest_rank(
             "Authorization": token,
         },
         json={
-            "currentPage": current_page,
-            "limit": limit,
+            "currentPage": 0,
+            "limit": 999999,
             "cid": contest_id,
             "forceRefresh": False,
             "removeStar": False,
@@ -191,30 +212,29 @@ def get_scpc_contest_rank(
     records = json_data.get("data", {}).get("records") or json_data.get("records") or []
     rank_users: List[ScpcContestRankUser] = []
     for record in records:
-        try:
-            avatar_val = str(record.get("avatar", "") or "")
-            if avatar_val and not avatar_val.startswith("http"):
-                avatar_val = (
-                    "https://scpc.fun" + avatar_val
-                    if avatar_val.startswith("/")
-                    else "https://scpc.fun/" + avatar_val
-                )
-            rank_users.append(
-                ScpcContestRankUser(
-                    rank=int(record.get("rank", 0)),
-                    award_name=str(record.get("awardName", "") or ""),
-                    uid=str(record.get("uid", "") or ""),
-                    username=str(record.get("username", "") or ""),
-                    real_name=str(record.get("realname", "") or ""),
-                    gender=str(record.get("gender", "") or ""),
-                    avatar=avatar_val,
-                    total=int(record.get("total", 0)),
-                    ac=int(record.get("ac", 0)),
-                    total_time=int(record.get("totalTime", 0)),
-                )
+        submission_info = {}
+        for data in record["submissionInfo"]:
+            information = record["submissionInfo"][data]
+            submission_info[data] = ACMInformation(
+                ac_time=int(information.get("ACTime", 0) or 0),
+                is_ac=bool(information.get("isAC", False) or False),
+                error_count=int(information.get("errorNum", 0) or 0),
+                is_first_ac=bool(information.get("isFirstAC", False) or False),
             )
-        except Exception:
-            continue
+        rank_users.append(
+            ScpcContestRankUser(
+                rank=int(record.get("rank", 0)),
+                award_name=str(record.get("awardName", "") or ""),
+                user_name=str(record.get("username", "") or ""),
+                real_name=str(record.get("realname", "") or ""),
+                nick_name=str(record.get("nickname", "") or ""),
+                school=str(record.get("school", "") or ""),
+                total=int(record.get("total", 0)),
+                ac=int(record.get("ac", 0)),
+                total_time=int(record.get("totalTime", 0)),
+                information=submission_info,
+            )
+        )
     return rank_users
 
 
@@ -710,4 +730,89 @@ def get_scpc_recent_updated_problems() -> Optional[List[ScpcUpdatedProblem]]:
     return items
 
 
-LOG = get_log()
+def generate_excel_contest_rank(rank_users: List[ScpcContestRankUser], contest_id: int):
+    workbook = xlsxwriter.Workbook(f"SCPC_{contest_id}.xlsx")
+    worksheet = workbook.add_worksheet()
+    header_format = workbook.add_format(
+        {
+            "bold": True,
+            "fg_color": "#D7E4BC",
+            "border": 1,
+            "align": "center",
+            "font_size": 14,
+        }
+    )
+
+    ac_format = workbook.add_format(
+        {
+            "fg_color": "#98FB98",
+            "align": "center",
+            "bold": True,
+            "border": 1,
+        }
+    )
+    first_ac_format = workbook.add_format(
+        {
+            "fg_color": "#4169E1",
+            "font_size": 12,
+            "align": "center",
+            "bold": True,
+            "border": 1,
+        }
+    )
+    center_format = workbook.add_format({"align": "center"})
+
+    field_names = [field.name for field in fields(rank_users[0])]
+    field_names.pop()
+    chinese_headers = rank_users[0].get_chinese_headers()
+    chinese_field_names = [chinese_headers[field_name] for field_name in field_names]
+
+    print(f"字段名: {field_names}")
+    print(f"中文表头: {chinese_field_names}")
+
+    last_index = 0
+    for col, chinese_name in enumerate(chinese_field_names):
+        worksheet.write(0, col, chinese_name, header_format)
+        last_index = col
+
+    last_index += 1
+
+    for problem, information in rank_users[0].information.items():
+        worksheet.write(0, last_index, problem, header_format)
+        last_index += 1
+
+    for row, item in enumerate(rank_users, start=1):
+        column = 0
+        for col, field_name in enumerate(field_names):
+            try:
+                value = getattr(item, field_name)
+                if isinstance(value, (int, float)):
+                    worksheet.write_number(row, col, value, center_format)
+                else:
+                    worksheet.write_string(row, col, str(value), center_format)
+
+            except Exception as e:
+                print(f"错误处理行 {row} 列 {col} (字段: {field_name}): {e}")
+                worksheet.write_string(row, col, "错误", center_format)
+
+            column = col
+
+        column += 1
+        for problem, information in item.information.items():
+            if information.is_ac:
+                if information.is_first_ac:
+                    worksheet.write_string(row, column, f"""率先AC""", first_ac_format)
+                else:
+                    worksheet.write_string(row, column, f"""AC""", ac_format)
+            else:
+                worksheet.write_string(row, column, "")
+            column += 1
+
+    # 调整列宽
+    for col, chinese_name in enumerate(chinese_field_names):
+        # 考虑中文字符宽度，适当增加列宽
+        width = max(len(chinese_name) + 12, 12)
+        worksheet.set_column(col, col, width)
+
+    workbook.close()
+    return os.path.abspath(f"SCPC_{contest_id}.xlsx")

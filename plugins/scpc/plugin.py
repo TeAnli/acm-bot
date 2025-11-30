@@ -16,6 +16,7 @@ from .platforms.codeforces import (
     get_codeforces_user_rating,
 )
 from .platforms.scpc import (
+    generate_excel_contest_rank,
     get_scpc_user_info,
     get_scpc_contests,
     scpc_login,
@@ -520,31 +521,28 @@ class SCPCPlugin(NcatBotPlugin):
         )
 
     @command_registry.command(
-        "scpc比赛排行",
-        description="获取指定比赛的过题排行，参数: 比赛ID [limit] [page]",
+        "生成比赛排行", description="生成指定比赛的排行榜Excel表格"
     )
     @group_filter
     async def get_scpc_contest_rank_command(
-        self, event: GroupMessageEvent, contest_id: int, limit: int = 50, page: int = 1
+        self, event: GroupMessageEvent, contest_id: int
     ):
         username = DEFAULT_SCPC_USERNAME
         password = DEFAULT_SCPC_PASSWORD
         token = scpc_login(username, password)
         if not token:
             await self.api.send_group_text(
-                event.group_id, "登录SCPC失败，无法获取比赛排行（请检查默认凭据）"
+                event.group_id, "登录SCPC失败，无法获取比赛排行 (请通知开发者)"
             )
             return
-        ranks = get_scpc_contest_rank(
-            contest_id=contest_id, token=token, current_page=page, limit=limit
-        )
+        ranks = get_scpc_contest_rank(contest_id=contest_id, token=token)
         if not ranks:
             await self.api.send_group_text(
                 event.group_id, "未获取到比赛排行或比赛ID无效"
             )
-            return
-        lines = []
-        for u in ranks:
-            line = f"#{u.rank} {u.username} ({u.real_name}) | 奖项:{u.award_name} | AC:{u.ac} / 提交:{u.total} | 用时:{u.total_time}s"
-            lines.append(line)
-        await self.api.send_group_text(event.group_id, "\n".join(lines))
+        else:
+            excel_path = generate_excel_contest_rank(
+                rank_users=ranks, contest_id=contest_id
+            )
+            await self.api.send_group_file(event.group_id, file=excel_path)
+            pass

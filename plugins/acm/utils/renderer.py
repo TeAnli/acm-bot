@@ -222,17 +222,27 @@ class PlaywrightRenderer:
             except Exception:
                 pass
 
-            # 尝试等待 .card 元素可见
-            card = page.locator(".card")
+            # 尝试等待内容元素可见
+            target_selector = ".card"
+            target = page.locator(target_selector)
+            
             try:
-                await card.wait_for(state="visible", timeout=5000)
+                await target.wait_for(state="visible", timeout=2000)
             except Exception:
-                pass
+                # 尝试回退到 .container
+                target_selector = ".container"
+                target = page.locator(target_selector)
+                try:
+                    await target.wait_for(state="visible", timeout=2000)
+                except Exception:
+                    # 最后回退到 body
+                    target_selector = "body"
+                    target = page.locator(target_selector)
 
             # 动态调整高度
             try:
                 h = await page.evaluate(
-                    "document.querySelector('.card')?.getBoundingClientRect().height || 600"
+                    f"document.querySelector('{target_selector}')?.getBoundingClientRect().height || 600"
                 )
                 await page.set_viewport_size(
                     {"width": viewport_width, "height": int(h) + 40}
@@ -243,7 +253,7 @@ class PlaywrightRenderer:
             # 截图
             ok = False
             try:
-                await card.screenshot(path=output_path)
+                await target.screenshot(path=output_path)
                 ok = os.path.exists(output_path)
             except Exception:
                 ok = False

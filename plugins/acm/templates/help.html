@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="help-content">
+    <!-- User Commands Section -->
+    <div class="help-section">
+        <div class="help-section-title">用户指令</div>
+        <div class="help-grid">
+            {% for cmd in commands %}
+                {% if not cmd.is_admin %}
+                <div class="help-item">
+                    <div class="name">{{ cmd.name }}</div>
+                    <div class="desc">{{ cmd.desc }}</div>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Admin Commands Section -->
+    <div class="help-section">
+        <div class="help-section-title admin-title">管理员指令</div>
+        <div class="help-grid">
+            {% for cmd in commands %}
+                {% if cmd.is_admin %}
+                <div class="help-item admin">
+                    <div class="name">{{ cmd.name }}</div>
+                    <div class="desc">{{ cmd.desc }}</div>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <div style="margin-top: 24px; text-align: center; color: #94a3b8; font-size: 12px; font-weight: 500;">
+        当前版本: v{{ version }}
+    </div>
+</div>
+{% endblock %}

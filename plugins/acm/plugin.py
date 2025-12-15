@@ -201,22 +201,30 @@ class SCPCPlugin(NcatBotPlugin):
     async def get_recent_scpc_updated_problems(self, event: GroupMessageEvent):
         await commands.get_recent_scpc_updated_problems_logic(self, event)
 
-    @command_registry.command("scpc比赛排行", description="生成比赛的排行榜Excel表格")
-    @group_filter
-    async def get_scpc_contest_rank(self, event: GroupMessageEvent, contest_id: int):
-        await commands.get_scpc_contest_rank_logic(self, event, contest_id)
-
-    @command_registry.command("cf用户", description="获取Codeforces用户信息")
+    @command_registry.command("cf用户", description="获取 Codeforces 用户信息")
     @group_filter
     async def get_codeforces_user_info(self, event: GroupMessageEvent, handle: str):
         await commands.get_codeforces_user_info_logic(self, event, handle)
 
-    @command_registry.command("cf分数", description="获取Codeforces用户Rating折线图")
+    @command_registry.command(
+        "cf分数", description="获取 Codeforces 用户 Rating 变化图"
+    )
     @group_filter
     async def get_codeforces_rating_chart(self, event: GroupMessageEvent, handle: str):
         await commands.get_codeforces_rating_chart_logic(self, event, handle)
 
-    @command_registry.command("ai", description="ACM AI助手问答")
+    @command_registry.command("ai", description="询问 AI 问题")
     @group_filter
     async def ai_chat(self, event: GroupMessageEvent, question: str):
         await commands.ai_chat_logic(self, event, question)
+
+    @command_registry.command("help", description="获取帮助信息")
+    @group_filter
+    async def get_help(self, event: GroupMessageEvent):
+        await commands.get_help_logic(self, event)
+
+    # ----------------------------
+    @command_registry.command("scpc比赛排行", description="生成比赛的排行榜Excel表格")
+    @group_filter
+    async def get_scpc_contest_rank(self, event: GroupMessageEvent, contest_id: int):
+        await commands.get_scpc_contest_rank_logic(self, event, contest_id)

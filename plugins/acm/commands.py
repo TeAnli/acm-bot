@@ -1,3 +1,4 @@
+import os
 import random
 from typing import TYPE_CHECKING
 
@@ -12,8 +13,10 @@ from .platforms.scpc import (
     generate_excel_contest_rank,
     render_scpc_user_info_image,
     render_scpc_week_rank_image,
+    renderer,
 )
 from .utils.ai import ask_deepseek, DEFAULT_SYSTEM_PROMPT
+from .utils.webui import webui
 
 if TYPE_CHECKING:
     from .plugin import SCPCPlugin
@@ -28,13 +31,17 @@ async def send_random_image_logic(plugin: "SCPCPlugin", event: GroupMessageEvent
     await plugin.api.send_group_image(event.group_id, image_path)
 
 
-async def enable_contest_reminders_logic(plugin: "SCPCPlugin", event: GroupMessageEvent):
+async def enable_contest_reminders_logic(
+    plugin: "SCPCPlugin", event: GroupMessageEvent
+):
     LOG.info(f"用户 {event.user_id} 添加了比赛订阅 至 {event.group_id}")
     plugin.group_listeners[event.group_id] = True
     await plugin.api.send_group_text(event.group_id, "已为本群开启比赛监听任务")
 
 
-async def disable_contest_reminders_logic(plugin: "SCPCPlugin", event: GroupMessageEvent):
+async def disable_contest_reminders_logic(
+    plugin: "SCPCPlugin", event: GroupMessageEvent
+):
     LOG.info(f"User {event} removed contest listener for contest")
     plugin.group_listeners[event.group_id] = False
     await plugin.api.send_group_text(event.group_id, "已为本群关闭比赛监听任务")
@@ -198,6 +205,7 @@ async def get_scpc_contest_rank_logic(
     plugin: "SCPCPlugin", event: GroupMessageEvent, contest_id: int
 ):
     LOG.info(f"User {event.user_id} requesting rank for contest {contest_id}")
+
     rank_data = await plugin.scpc_platform.get_contest_rank(contest_id)
     if not rank_data:
         await plugin.api.send_group_text(event.group_id, "获取比赛排行失败")
@@ -212,3 +220,52 @@ async def get_scpc_contest_rank_logic(
             )
     else:
         await plugin.api.send_group_text(event.group_id, "生成排行表格失败")
+
+
+async def get_help_logic(plugin: "SCPCPlugin", event: GroupMessageEvent):
+    commands_list = [
+        {"name": "/help", "desc": "获取帮助信息", "is_admin": False},
+        {"name": "/来个男神", "desc": "随机发送一张男神照片", "is_admin": False},
+        {"name": "/开启比赛提醒", "desc": "开启本群比赛提醒", "is_admin": True},
+        {"name": "/关闭比赛提醒", "desc": "关闭本群比赛提醒", "is_admin": True},
+        {"name": "/scpc用户 [username]", "desc": "获取SCPC用户信息", "is_admin": False},
+        {"name": "/scpc排行", "desc": "获取SCPC本周排行", "is_admin": False},
+        {"name": "/cf比赛", "desc": "获取Codeforces近期比赛", "is_admin": False},
+        {"name": "/scpc近期比赛", "desc": "获取近期SCPC比赛信息", "is_admin": False},
+        {"name": "/牛客比赛", "desc": "获取牛客近期比赛信息", "is_admin": False},
+        {"name": "/洛谷比赛", "desc": "获取洛谷比赛信息", "is_admin": False},
+        {
+            "name": "/scpc近期更新题目",
+            "desc": "获取近期SCPC更新题目",
+            "is_admin": False,
+        },
+        {
+            "name": "/cf用户 [handle]",
+            "desc": "获取 Codeforces 用户信息",
+            "is_admin": False,
+        },
+        {
+            "name": "/cf分数 [handle]",
+            "desc": "获取 Codeforces 用户 Rating 变化图",
+            "is_admin": False,
+        },
+        {"name": "/ai [question]", "desc": "询问 AI 问题", "is_admin": False},
+    ]
+
+    html = webui.render_help(commands_list, plugin.version)
+
+    # Save to temp file
+    temp_path = os.path.abspath(f"data/temp_help_{event.group_id}.png")
+    os.makedirs(os.path.dirname(temp_path), exist_ok=True)
+
+    success = await renderer.render_html(html, temp_path)
+
+    if success:
+        await plugin.api.send_group_image(event.group_id, temp_path)
+        # Cleanup
+        try:
+            os.remove(temp_path)
+        except Exception:
+            pass
+    else:
+        await plugin.api.send_group_text(event.group_id, "生成帮助图片失败")

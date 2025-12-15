@@ -251,6 +251,92 @@
           color: #6b7280;
           font-size: 13px;
         }
+
+        /* Help Styles - Enhanced */
+        .help-section {
+          margin-top: 24px;
+        }
+        .help-section-title {
+          font-size: 14px;
+          font-weight: 800;
+          color: #4b5563;
+          margin-bottom: 16px;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+        .help-section-title::before {
+            content: '';
+            display: block;
+            width: 6px;
+            height: 18px;
+            background: #10b981; /* User Green */
+            border-radius: 3px;
+        }
+        
+        .help-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 16px;
+        }
+        
+        .help-item {
+          background: #ffffff;
+          border: 1px solid #f1f5f9;
+          border-radius: 16px;
+          padding: 16px;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.03);
+          position: relative;
+          overflow: hidden;
+        }
+
+        .help-item .name {
+          position: relative;
+          z-index: 1;
+          font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+          font-size: 15px;
+          font-weight: 700;
+          color: #059669; /* User Green text */
+          background: #ecfdf5; /* User Green bg */
+          padding: 6px 10px;
+          border-radius: 8px;
+          align-self: flex-start;
+          border: 1px solid #d1fae5; /* User Green border */
+        }
+        
+        .help-item .desc {
+          position: relative;
+          z-index: 1;
+          font-size: 13px;
+          color: #64748b;
+          line-height: 1.5;
+          padding-left: 2px;
+        }
+        
+        /* Admin Command Style Overrides */
+        .help-section-title.admin-title::before {
+            background: #2563eb; /* Admin Blue */
+        }
+        
+        .help-item.admin {
+          background: #fff;
+          border-color: #dbeafe; /* Admin Blue border */
+          box-shadow: 0 4px 12px -2px rgba(37, 99, 235, 0.06); /* Admin Blue shadow */
+        }
+
+        .help-item.admin .name {
+          color: #2563eb; /* Admin Blue text */
+          background: #eff6ff; /* Admin Blue bg */
+          border-color: #dbeafe; /* Admin Blue border */
+        }
+        .help-item.admin .desc {
+          color: #475569;
+        }
     </style>
 </head>
 <body>

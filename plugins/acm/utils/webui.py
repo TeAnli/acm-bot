@@ -141,6 +141,10 @@ class WebUI:
             meta=point_meta,
         )
 
+    def render_help(self, commands: list, version: str) -> str:
+        template = self.env.get_template("help.html")
+        return template.render(title="帮助菜单", commands=commands, version=version)
+
 
 # Global instance
 webui = WebUI()

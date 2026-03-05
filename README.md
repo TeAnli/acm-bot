@@ -50,7 +50,7 @@ pip install -r requirements.txt
 playwright install chromium
 ```
 
-> [!IMPORTANT] > **注意事项**
+> [!IMPORTANT]
 >
 > - **浏览器内核**: 图片生成功能依赖 `Playwright`，请确保 服务器/本地环境已正确安装浏览器内核。
 > - **文件权限**: Excel 生成功能需要写入权限，请确保运行目录可写。

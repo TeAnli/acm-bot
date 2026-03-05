@@ -1,33 +1,25 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% extends "base.html" %}
+
+{% block head %}
     <title>Codeforces User Info</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
 
-        body {
-            background: #f0f2f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-        }
-
+        /* Override base card styles */
         .card {
-            background: white;
             width: 500px;
+            padding: 0;
             border-radius: 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             overflow: hidden;
             position: relative;
+            background: white;
+            /* Center the card if body flex is removed */
+            margin: 20px auto; 
         }
 
         .card-header {
@@ -36,17 +28,17 @@
             position: relative;
         }
 
-        /* Rank-based header backgrounds */
+        /* Rank-based header backgrounds (Gradients kept as specific design choice) */
         .bg-newbie { background: linear-gradient(135deg, #e0e0e0 0%, #bdbdbd 100%); }
         .bg-pupil { background: linear-gradient(135deg, #a8ff78 0%, #78ffd6 100%); }
         .bg-specialist { background: linear-gradient(135deg, #6dd5ed 0%, #2193b0 100%); }
-        .bg-expert { background: linear-gradient(135deg, #64b3f4 0%, #c2e59c 100%); background: linear-gradient(to right, #4facfe 0%, #00f2fe 100%); } /* Blueish */
+        .bg-expert { background: linear-gradient(135deg, #64b3f4 0%, #c2e59c 100%); background: linear-gradient(to right, #4facfe 0%, #00f2fe 100%); }
         .bg-candidate-master { background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); }
         .bg-master { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); }
         .bg-international-master { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); }
         .bg-grandmaster { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%); background: linear-gradient(to right, #ff416c, #ff4b2b); }
         .bg-international-grandmaster { background: linear-gradient(to right, #ff416c, #ff4b2b); }
-        .bg-legendary-grandmaster { background: linear-gradient(to right, #8E2DE2, #4A00E0); background: linear-gradient(to right, #cc2b5e, #753a88); } /* Deep Red/Purple */
+        .bg-legendary-grandmaster { background: linear-gradient(to right, #8E2DE2, #4A00E0); background: linear-gradient(to right, #cc2b5e, #753a88); }
 
         .avatar-container {
             position: absolute;
@@ -149,35 +141,37 @@
             font-weight: 500;
         }
 
-        /* Rank Colors Text */
-        .text-newbie { color: #808080; }
-        .text-pupil { color: #008000; }
-        .text-specialist { color: #03a89e; }
-        .text-expert { color: #0000ff; }
-        .text-candidate-master { color: #a0a; }
-        .text-master { color: #ff8c00; }
-        .text-international-master { color: #ff8c00; }
-        .text-grandmaster { color: #ff0000; }
-        .text-international-grandmaster { color: #ff0000; }
-        .text-legendary-grandmaster { color: #ff0000; }
+        /* Use CSS Variables from base.html where possible */
+        .text-newbie { color: var(--cf-newbie); }
+        .text-pupil { color: var(--cf-pupil); }
+        .text-specialist { color: var(--cf-specialist); }
+        .text-expert { color: var(--cf-expert); }
+        .text-candidate-master { color: var(--cf-candidate-master); }
+        .text-master { color: var(--cf-master); }
+        .text-international-master { color: var(--cf-master); } /* Usually same orange */
+        .text-grandmaster { color: var(--cf-grandmaster); }
+        .text-international-grandmaster { color: var(--cf-legendary); }
+        .text-legendary-grandmaster { color: var(--cf-legendary); }
         .text-legendary-grandmaster::first-letter { color: black; }
 
-        /* Badge Colors */
-        .badge-newbie { background: #808080; }
-        .badge-pupil { background: #008000; }
-        .badge-specialist { background: #03a89e; }
-        .badge-expert { background: #0000ff; }
-        .badge-candidate-master { background: #a0a; }
-        .badge-master { background: #ff8c00; }
-        .badge-international-master { background: #ff8c00; }
-        .badge-grandmaster { background: #ff0000; }
-        .badge-international-grandmaster { background: #ff0000; }
+        .badge-newbie { background: var(--cf-newbie); }
+        .badge-pupil { background: var(--cf-pupil); }
+        .badge-specialist { background: var(--cf-specialist); }
+        .badge-expert { background: var(--cf-expert); }
+        .badge-candidate-master { background: var(--cf-candidate-master); }
+        .badge-master { background: var(--cf-master); }
+        .badge-international-master { background: var(--cf-master); }
+        .badge-grandmaster { background: var(--cf-grandmaster); }
+        .badge-international-grandmaster { background: var(--cf-grandmaster); }
+        /* Legendary badge has gradient, keep it */
         .badge-legendary-grandmaster { background: linear-gradient(to right, #000, #ff0000); }
 
     </style>
-</head>
-<body>
+{% endblock %}
 
+{% block header %}{% endblock %}
+
+{% block content %}
     {% macro get_rank_zh(rank) %}
         {%- if rank == "newbie" -%}新手
         {%- elif rank == "pupil" -%}学徒
@@ -195,71 +189,67 @@
 
     {% set rank_class = user.rank.replace(' ', '-') %}
 
-    <div class="card">
-        <div class="card-header bg-{{ rank_class }}">
-            <div class="avatar-container">
-                <img class="avatar" src="{{ user.avatar }}" alt="avatar" onerror="this.src='https://userpic.codeforces.org/no-avatar.jpg'">
+    <div class="card-header bg-{{ rank_class }}">
+        <div class="avatar-container">
+            <img class="avatar" src="{{ user.avatar }}" alt="avatar" onerror="this.src='https://userpic.codeforces.org/no-avatar.jpg'">
+        </div>
+    </div>
+    
+    <div class="content">
+        <div class="header-info">
+            <div class="handle-row">
+                <span class="handle text-{{ rank_class }}">{{ user.handle }}</span>
+                <span class="rank-badge badge-{{ rank_class }}">{{ get_rank_zh(user.rank) }}</span>
+            </div>
+            
+            <div class="org-info">
+                {% if user.organization %}
+                <div class="org-row">
+                    <span>🏢</span>
+                    <span>{{ user.organization }}</span>
+                </div>
+                {% endif %}
+                
+                {% if user.country or user.city %}
+                <div class="org-row">
+                    <span>📍</span>
+                    <span>
+                        {% if user.city %}{{ user.city }}{% endif %}
+                        {% if user.city and user.country %}, {% endif %}
+                        {% if user.country %}{{ user.country }}{% endif %}
+                    </span>
+                </div>
+                {% endif %}
             </div>
         </div>
-        
-        <div class="content">
-            <div class="header-info">
-                <div class="handle-row">
-                    <span class="handle text-{{ rank_class }}">{{ user.handle }}</span>
-                    <span class="rank-badge badge-{{ rank_class }}">{{ get_rank_zh(user.rank) }}</span>
-                </div>
-                
-                <div class="org-info">
-                    {% if user.organization %}
-                    <div class="org-row">
-                        <span>🏢</span>
-                        <span>{{ user.organization }}</span>
-                    </div>
-                    {% endif %}
-                    
-                    {% if user.country or user.city %}
-                    <div class="org-row">
-                        <span>📍</span>
-                        <span>
-                            {% if user.city %}{{ user.city }}{% endif %}
-                            {% if user.city and user.country %}, {% endif %}
-                            {% if user.country %}{{ user.country }}{% endif %}
-                        </span>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
 
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <span class="stat-label">当前积分</span>
-                    <span class="stat-value text-{{ rank_class }}">{{ user.rating }}</span>
-                    <span class="stat-sub">Current Rating</span>
-                </div>
-                
-                <div class="stat-card">
-                    <span class="stat-label">历史最高</span>
-                    {% set max_rank_class = user.max_rank.replace(' ', '-') %}
-                    <span class="stat-value text-{{ max_rank_class }}">{{ user.max_rating }}</span>
-                    <span class="stat-sub">{{ get_rank_zh(user.max_rank) }}</span>
-                </div>
-                
-                <div class="stat-card">
-                    <span class="stat-label">社区贡献</span>
-                    <span class="stat-value" style="color: {% if user.contribution >= 0 %}#00b894{% else %}#d63031{% endif %}">
-                        {% if user.contribution > 0 %}+{% endif %}{{ user.contribution }}
-                    </span>
-                    <span class="stat-sub">Contribution</span>
-                </div>
-                
-                <div class="stat-card">
-                    <span class="stat-label">被关注数</span>
-                    <span class="stat-value">{{ user.friend_of_count }}</span>
-                    <span class="stat-sub">Followers</span>
-                </div>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-label">当前积分</span>
+                <span class="stat-value text-{{ rank_class }}">{{ user.rating }}</span>
+                <span class="stat-sub">Current Rating</span>
+            </div>
+            
+            <div class="stat-card">
+                <span class="stat-label">历史最高</span>
+                {% set max_rank_class = user.max_rank.replace(' ', '-') %}
+                <span class="stat-value text-{{ max_rank_class }}">{{ user.max_rating }}</span>
+                <span class="stat-sub">{{ get_rank_zh(user.max_rank) }}</span>
+            </div>
+            
+            <div class="stat-card">
+                <span class="stat-label">社区贡献</span>
+                <span class="stat-value" style="color: {% if user.contribution >= 0 %}#00b894{% else %}#d63031{% endif %}">
+                    {% if user.contribution > 0 %}+{% endif %}{{ user.contribution }}
+                </span>
+                <span class="stat-sub">Contribution</span>
+            </div>
+            
+            <div class="stat-card">
+                <span class="stat-label">被关注数</span>
+                <span class="stat-value">{{ user.friend_of_count }}</span>
+                <span class="stat-sub">Followers</span>
             </div>
         </div>
     </div>
-
-</body>
-</html>
+{% endblock %}

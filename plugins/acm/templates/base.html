@@ -5,6 +5,16 @@
     <style>
         :root {
           --w: 680px;
+          
+          /* Codeforces Rank Colors */
+          --cf-newbie: #808080;
+          --cf-pupil: #008000;
+          --cf-specialist: #03a89e;
+          --cf-expert: #0000ff;
+          --cf-candidate-master: #aa00aa;
+          --cf-master: #ff8c00;
+          --cf-grandmaster: #ff0000;
+          --cf-legendary: #ff0000; /* First letter black */
         }
         body {
           margin: 0;
@@ -338,14 +348,18 @@
           color: #475569;
         }
     </style>
+    {% block head %}{% endblock %}
 </head>
 <body>
     <div class="card">
+        {% block header %}
         <div class="header">
             <span>{{ title }}</span>
             <span class="note">图片来源于安心Bot</span>
         </div>
+        {% endblock %}
         {% block content %}{% endblock %}
     </div>
+    {% block scripts %}{% endblock %}
 </body>
 </html>

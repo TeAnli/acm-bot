@@ -21,17 +21,21 @@ DEFAULT_HEADERS = {
 }
 
 
-async def fetch_html(url: str, headers: Optional[Dict[str, str]] = None, timeout: float = 30.0) -> str:
+async def fetch_html(
+    url: str,
+    headers: Optional[Dict[str, str]] = None,
+    timeout: float = 30.0,
+) -> str:
     """
-    直接通过GET请求获取HTML文本信息
+    通过 GET 请求获取 HTML 文本信息
 
     Args:
-        url: 目标url地址
-        headers: HTTP请求头
-        timeout: 请求超时时间(秒)
+        url (str): 目标 URL 地址
+        headers (Optional[Dict[str, str]]): HTTP 请求头，默认使用 DEFAULT_HEADERS
+        timeout (float): 请求超时时间(秒)，默认 30.0
 
     Returns:
-        HTML文本信息
+        str: 获取到的 HTML 文本内容。如果请求失败，返回空字符串。
     """
     if headers is None:
         headers = DEFAULT_HEADERS
@@ -54,17 +58,17 @@ async def fetch_json(
     timeout: float = 30.0,
 ) -> Dict[str, Any]:
     """
-    通过自定义请求获取请求数据
+    发送 HTTP 请求并获取 JSON 数据
 
     Args:
-        url: 目标url地址
-        headers: HTTP请求头
-        payload: 请求数据
-        method: 请求方式
-        timeout: 请求超时时间(秒)
+        url (str): 目标 URL 地址
+        headers (Optional[Dict[str, str]]): HTTP 请求头，默认使用 DEFAULT_HEADERS
+        payload (Optional[Dict[str, Any]]): 请求体数据 (JSON 格式)，仅用于 POST/PUT 等方法
+        method (Method): HTTP 请求方法 (GET, POST, etc.)，默认 Method.GET
+        timeout (float): 请求超时时间(秒)，默认 30.0
 
     Returns:
-        JSON数据转义后的字典
+        Dict[str, Any]: 解析后的 JSON 字典。如果请求失败或解析错误，返回空字典 {}。
     """
     if headers is None:
         headers = DEFAULT_HEADERS

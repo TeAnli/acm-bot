@@ -95,7 +95,7 @@ async def broadcast_text(api_client, group_listeners: dict, text: str):
             await api_client.send_group_text(gid, text)
 
 
-def extract_contest_timing(contest: Contest, now_ts: int):
+def extract_contest_timing(contest: "Contest", now_ts: int):
     """
     根据统一 Contest 对象计算比赛状态与剩余时间。
 
@@ -112,24 +112,23 @@ def extract_contest_timing(contest: Contest, now_ts: int):
     if start_ts <= 0 or duration <= 0:
         return None
     end_ts = start_ts + duration
+    
     if now_ts < start_ts:
-        remaining = start_ts - now_ts
         return (
             "即将开始",
             "据开始还剩",
-            remaining,
+            start_ts - now_ts,
             duration,
             start_ts,
-            remaining,
+            start_ts - now_ts,
         )
     if start_ts <= now_ts < end_ts:
-        remaining = end_ts - now_ts
         return (
             "进行中",
             "距离结束",
-            remaining,
+            end_ts - now_ts,
             duration,
             start_ts,
-            remaining,
+            end_ts - now_ts,
         )
     return None

@@ -19,9 +19,23 @@ async def ask_deepseek(
 ) -> str:
     """
     调用 Deepseek API 进行问答
+
+    Args:
+        question (str): 用户提问内容
+        api_key (str): Deepseek API Key
+        system_prompt (str): 系统提示词
+        temperature (float): 随机性参数 (0.0 - 2.0)，默认 0.5
+        max_tokens (int): 最大生成 Token 数，默认 800
+
+    Returns:
+        str: AI 回复内容或错误提示信息
     """
-    if not api_key or (api_key.startswith("sk-") and len(api_key) < 10):
+    if not api_key:
         return "请先在插件配置中配置有效的 Deepseek API Key"
+    
+    # 简单的 Key 格式预检查（假设 sk- 开头且长度足够）
+    if api_key.startswith("sk-") and len(api_key) < 10:
+        return "Deepseek API Key 格式看似无效，请检查配置"
 
     headers = {
         "Content-Type": "application/json",
@@ -59,7 +73,7 @@ async def ask_deepseek(
             return f"API 调用失败: {error_msg}"
         else:
             LOG.error(f"Deepseek API returned unexpected format: {response}")
-            return "API 返回格式异常"
+            return "API 返回格式异常，请查看日志"
 
     except Exception as e:
         LOG.error(f"Deepseek API request failed: {e}")

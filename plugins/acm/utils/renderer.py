@@ -28,7 +28,12 @@ class PlaywrightRenderer:
         self._max_pages = 50
 
     async def _is_browser_healthy(self) -> bool:
-        """检查浏览器健康状态"""
+        """
+        检查浏览器健康状态
+
+        Returns:
+            bool: 如果浏览器正常且页面数未超标，返回 True；否则返回 False
+        """
         if not self._browser:
             return False
         try:
@@ -45,7 +50,12 @@ class PlaywrightRenderer:
             return False
 
     async def _reinit_browser(self):
-        """重新初始化浏览器"""
+        """
+        重新初始化浏览器
+
+        释放当前所有资源（Context, Browser, Playwright），重置状态标志，
+        以便下一次调用 _ensure_browser 时能启动全新的实例。
+        """
         async with self._init_lock:
             if self._context:
                 try:
@@ -76,10 +86,19 @@ class PlaywrightRenderer:
             self._page_count = 0
 
     async def _ensure_browser(self) -> Optional[Browser]:
-        """确保浏览器实例存在"""
+        """
+        确保浏览器实例存在
+
+        如果浏览器尚未启动或已崩溃，尝试启动新实例。
+        包含重试冷却机制，避免频繁重启失败。
+
+        Returns:
+            Optional[Browser]: 成功启动返回 Browser 实例，失败返回 None
+        """
         if self._browser and self._context:
             return self._browser
 
+        # 快速检查冷却期，避免不必要的锁竞争
         if self._browser_failed:
             if (
                 time.time() - self._last_browser_fail_time
@@ -90,9 +109,11 @@ class PlaywrightRenderer:
             self._browser_failed = False
 
         async with self._init_lock:
+            # 双重检查
             if self._browser and self._context:
                 return self._browser
 
+            # 锁内再次检查冷却（防止多个协程同时进入等待）
             if self._browser_failed:
                 if (
                     time.time() - self._last_browser_fail_time
@@ -128,6 +149,7 @@ class PlaywrightRenderer:
                 LOG.error(f"初始化 Playwright 浏览器失败: {e}")
                 self._browser_failed = True
                 self._last_browser_fail_time = time.time()
+                # 初始化失败，尝试清理残留
                 if self._p:
                     try:
                         await self._p.stop()

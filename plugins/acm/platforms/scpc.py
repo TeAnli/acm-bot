@@ -8,16 +8,13 @@ from httpx import AsyncClient
 from ncatbot.utils import get_log
 
 from ..utils.network import Method, fetch_json
-from ..utils.renderer import PlaywrightRenderer
+from ..utils.renderer import renderer
+from ..utils.webui import webui_helper
 from ..utils.text import calculate_accept_ratio
-from ..utils.webui import WebUI
+
 from .platform import Contest, Platform
 
 LOG = get_log()
-
-# Initialize global renderer
-renderer = PlaywrightRenderer()
-webui_helper = WebUI()
 
 
 def parse_scpc_time(value: Any) -> int:

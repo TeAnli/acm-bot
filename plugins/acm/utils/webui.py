@@ -229,5 +229,4 @@ class WebUI:
         return template.render(title="SCPC 近期更新题目", problems=problems)
 
 
-# Global instance
-webui = WebUI()
+webui_helper = WebUI()

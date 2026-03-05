@@ -4,18 +4,12 @@ from typing import List, Optional
 
 from ncatbot.utils import get_log
 
-from ..utils import webui
+from ..utils.webui import webui_helper
 from ..utils.network import fetch_json
-from ..utils.renderer import PlaywrightRenderer
+from ..utils.renderer import renderer
 from .platform import Contest, Platform
 
 LOG = get_log()
-
-# Initialize global renderer
-renderer = PlaywrightRenderer()
-webui_helper = webui.WebUI()
-
-
 def codeforces_contests_url(include_gym: bool = False) -> str:
     """
     返回 Codeforces 比赛列表 API 的 URL

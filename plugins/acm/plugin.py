@@ -2,14 +2,14 @@ import asyncio
 from datetime import datetime
 from typing import Dict, List, Set, Tuple
 
-from ncatbot.core.event import GroupMessageEvent
+from ncatbot.core.event import BaseMessageEvent, GroupMessageEvent
 from ncatbot.plugin_system import (
     NcatBotPlugin,
     command_registry,
     group_admin_filter,
     group_filter,
 )
-from ncatbot.utils import get_log
+from ncatbot.utils import get_log, ncatbot_config
 
 from . import commands
 from .platforms.codeforces import CodeforcesPlatform
@@ -152,8 +152,7 @@ class SCPCPlugin(NcatBotPlugin):
     # ----------------------------
 
     @command_registry.command("随机老婆", description="随机发送一张二次元图片")
-    @group_filter
-    async def send_random_image(self, event: GroupMessageEvent):
+    async def send_random_image(self, event: BaseMessageEvent):
         await commands.send_random_image_logic(self, event)
 
     @command_registry.command("开启比赛提醒", description="开启本群比赛提醒")
@@ -167,69 +166,56 @@ class SCPCPlugin(NcatBotPlugin):
         await commands.disable_contest_reminders_logic(self, event)
 
     @command_registry.command("scpc用户", description="获取SCPC用户信息")
-    @group_filter
-    async def get_user_info(self, event: GroupMessageEvent, username: str):
+    async def get_user_info(self, event: BaseMessageEvent, username: str):
         await commands.get_user_info_logic(self, event, username)
 
     @command_registry.command("scpc排行", description="获取SCPC本周排行")
-    @group_filter
-    async def get_scpc_week_rank(self, event: GroupMessageEvent):
+    async def get_scpc_week_rank(self, event: BaseMessageEvent):
         await commands.get_scpc_week_rank_logic(self, event)
 
     @command_registry.command("cf比赛", description="获取Codeforces近期比赛")
-    @group_filter
-    async def get_codeforces_contests(self, event: GroupMessageEvent):
+    async def get_codeforces_contests(self, event: BaseMessageEvent):
         await commands.get_codeforces_contests_logic(self, event)
 
     @command_registry.command("scpc近期比赛", description="获取近期SCPC比赛信息")
-    @group_filter
-    async def get_recent_scpc_contests(self, event: GroupMessageEvent):
+    async def get_recent_scpc_contests(self, event: BaseMessageEvent):
         await commands.get_recent_scpc_contests_logic(self, event)
 
     @command_registry.command("牛客比赛", description="获取牛客近期比赛信息")
-    @group_filter
-    async def get_nowcoder_recent_contests(self, event: GroupMessageEvent):
+    async def get_nowcoder_recent_contests(self, event: BaseMessageEvent):
         await commands.get_nowcoder_recent_contests_logic(self, event)
 
     @command_registry.command("洛谷比赛", description="获取洛谷比赛信息")
-    @group_filter
-    async def get_luogu_contests(self, event: GroupMessageEvent):
+    async def get_luogu_contests(self, event: BaseMessageEvent):
         await commands.get_luogu_contests_logic(self, event)
 
     @command_registry.command("scpc近期更新题目", description="获取近期SCPC更新题目")
-    @group_filter
-    async def get_recent_scpc_updated_problems(self, event: GroupMessageEvent):
+    async def get_recent_scpc_updated_problems(self, event: BaseMessageEvent):
         await commands.get_recent_scpc_updated_problems_logic(self, event)
 
     @command_registry.command("cf用户", description="获取 Codeforces 用户信息")
-    @group_filter
-    async def get_codeforces_user_info(self, event: GroupMessageEvent, handle: str):
+    async def get_codeforces_user_info(self, event: BaseMessageEvent, handle: str):
         await commands.get_codeforces_user_info_logic(self, event, handle)
 
     @command_registry.command(
-        "cf分数", description="获取 Codeforces 用户 Rating 变化图"
+        "cf分数", description="获取 Codeforces 用户 Rating  变化图"
     )
-    @group_filter
-    async def get_codeforces_rating_chart(self, event: GroupMessageEvent, handle: str):
+    async def get_codeforces_rating_chart(self, event: BaseMessageEvent, handle: str):
         await commands.get_codeforces_rating_chart_logic(self, event, handle)
 
     @command_registry.command("ai", description="询问 AI 问题")
-    @group_filter
-    async def ai_chat(self, event: GroupMessageEvent, question: str):
+    async def ai_chat(self, event: BaseMessageEvent, question: str):
         await commands.ai_chat_logic(self, event, question)
 
     @command_registry.command("help", description="获取帮助信息")
-    @group_filter
-    async def get_help(self, event: GroupMessageEvent):
+    async def get_help(self, event: BaseMessageEvent):
         await commands.get_help_logic(self, event)
 
     @command_registry.command("近期比赛", description="获取所有平台近期比赛")
-    @group_filter
-    async def get_all_recent_contests(self, event: GroupMessageEvent):
+    async def get_all_recent_contests(self, event: BaseMessageEvent):
         await commands.get_all_recent_contests_logic(self, event)
 
     # ----------------------------
     @command_registry.command("scpc比赛排行", description="生成比赛的排行榜Excel表格")
-    @group_filter
-    async def get_scpc_contest_rank(self, event: GroupMessageEvent, contest_id: int):
+    async def get_scpc_contest_rank(self, event: BaseMessageEvent, contest_id: int):
         await commands.get_scpc_contest_rank_logic(self, event, contest_id)

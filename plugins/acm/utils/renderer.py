@@ -298,3 +298,5 @@ class PlaywrightRenderer:
 
             if page_created:
                 self._page_count = max(0, self._page_count - 1)
+
+renderer = PlaywrightRenderer()

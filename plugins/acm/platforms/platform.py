@@ -3,6 +3,7 @@ from abc import ABCMeta, abstractmethod
 from typing import List
 
 
+
 @dataclass
 class Contest:
     id: int  # 比赛ID
